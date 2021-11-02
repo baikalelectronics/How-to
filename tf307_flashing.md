@@ -1,6 +1,6 @@
 # How to flash TF307 board firmware
 
-## %{color:red}red% BIG RED WARNING
+## BIG RED WARNING
 
 1. **The level of UART and SPI signals on TF307 is 1.8 Volts.**
 2. **DO NOT use adapters (USB-UART, SPI, etc) with 3.3 or 5 Volts
