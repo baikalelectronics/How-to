@@ -1,39 +1,35 @@
-# How to flash TF307 board firmware
+# Инструкция по прошивке платы TF307
 
-## BIG RED WARNING
+## Внимание!!!
 
-1. **The level of UART and SPI signals on TF307 is 1.8 Volts.**
-2. **DO NOT use adapters (USB-UART, SPI, etc) with 3.3 or 5 Volts
-level since the board can be permanently damaged!**
+1. **Уровень сигналов UART и SPI на TF307 составляет 1,8 вольт. ** 
+2. * Не используйте адаптеры (USB-UART, SPI, ETC) с уровнями 3.3 или 5 вольт, поскольку может быть повреждена плата и процессор!**
 
 
-## Required hardware
+## Необходимое оборудование
 
 1. [Olimex ARM-USB-OCD-H JTAG](https://www.olimex.com/Products/ARM/JTAG/ARM-USB-OCD-H)
-2. [FT232 USB UART board](https://www.chipdip.ru/product/ft232-usb-uart-board-type-a)
-3. Another computer (will be called `host` in this document)
+2. [FT232 USB UART модуль](https://www.chipdip.ru/product/ft232-usb-uart-board-type-a)
+3. ПК х86 (далее в документе хост-компьютер)
 
 
-## Required software (on the host computer)
+## Необходимый софт (на хост-компьютере)
 
-1. flashrom, version 1.2 or newer. Previous versions are known to **NOT** work
-2. picocom, version 2.2 (most likely older versions work too)
-3. sudo and sudo access
-
-For the automated flashing the following tools are also necessary:
-
-1. python3, version 3.6 or newer, previous versions are known to NOT work
-2. python3-serial, version 3.4 is known to work
-3. `lsusb` from usbutils, version 012 is known to work (most likely older versions work too)
-4. `udevadm` from udev, version 246 is known to work (most likely older versions work too)
+1. flashrom, версия 1.2 или новее. Предыдущие версии не работают
+2. picocom, версия 2.2 (более старые версии также можно использовать)
+3. sudo and sudo доступ
+4. python3, версия 3.6 или новее, предыдущие версии не работают
+5. python3-serial, версия 3.4
+6. `lsusb` из пакета usbutils, версия 012 (более старые версии также можно использовать)
+7. `udevadm` из пакета udev, версия 246 (более старые версии также можно использовать)
 
 
-## Connecting devices
+## Подключение jtag и USB UART модуля к плате
 
-**BIG RED WARNING #1**: **DON'T plug the standard 20-pin JTAG cable directly into `XP8`**!
-**BIG RED WARNING #2**: **make sure USB UART uses 1.8 Volts level, otherwise the board can be permanently damaged!**
+**Предупреждение #1**: **Не подключайте стандартный 20-контактный кабель jtag напрямую к разъему `XP8`**!
+**Предупреждение #2**: **Убедитесь что уровени сигналов USB UART модуля составляют 1.8В, в противном случае плата и процессор будут повреждены!**
 
-Both JTAG and USB-UART adapter should be attached to the `XP8` connector.
+И jtag, и переходник usb-uart должны быть подключены к разъему `XP8`.
 
 
 | XP8 TF307 pin |       |  ARM-USB-OCD-H pin  |        |
@@ -53,9 +49,9 @@ Both JTAG and USB-UART adapter should be attached to the `XP8` connector.
 |   GND                    |   14  |       GND          |
 
 
-Also you might want to connect to the UART console of BE-M1000 itself
-(to check if the board is able to boot, etc).
-Note: extra USB-UART adapter is required
+Также возможно подключение UART консоли BE-M1000 
+(чтобы проверить, может ли плата загружаться и т. д.).
+Примечание: требуется дополнительный адаптер USB-UART 
 
 |     XP8 TF307 pin           |       | FT232 USB UART pin |
 | :-------------------------: | :---: | :----------------: |
@@ -64,53 +60,50 @@ Note: extra USB-UART adapter is required
 |  `GND`                      |   10  |       GND          |
 
 
-Yeah, this is messy.
+## Прошивка
+
+Исходное состояние: 
+
+* плата физически выключена (шнур питания отключен) 
+* Olimex ARM-USB-OCD-H JTAG подключен к хост-компьютеру 
+* FT232 USB UART модуль подключен к хост-компьютеру
 
 
-## Manual flashing
-
-Initial state: 
-
-* The board is physically powered off (the power cord is disconnected)
-* Olimex ARM-USB-OCD-H JTAG is plugged into the host computer
-* FT232 USB UART is plugged into the host computer
-
-1. Power on the ATX power supply (attach the power cord), however **don't** power on the board yet.
-2. Figure out the device node which corresponds to FT232 USB UART (the one which
-   is attached to TO/FROM BMC pins). For instance, if a single FT232 USB UART
-   is connected to the host computer:
+1. Подключите кабель питания к БП ATX, только дежурное питание
+2. Выясните узел устройства, который соответствует ft232 usb uart (тот, который подключен к/от контактам bmc).
+   Например, если один ft232 usb uart подключен к хост-компьютеру.
    ```
    ls -l /dev/serial/by-id/ | grep FTDI
    lrwxrwxrwx 1 root root 13 Jun 29 13:19 usb-FTDI_FT232R_USB_UART_A50285BI-if00-port0 -> ../../ttyUSBNNN
    ```
-   The device node is `/dev/ttyUSBNNN`
-3. Connect to the BMC console:
+   Узел устройства `/dev/ttyUSBNNN`
+3. Подключитесь к BMC консоли командой:
    ```
    picocom -b115200 /dev/ttyUSBNNN
    ```
-4. For TP-TF307-MB-A0, TF307-MB-S-C boards: run the following commands in BMC console:
+4. Для плат TP-TF307-MB-A0, TF307-MB-S-C: Выполните следующие команды в BMC консоли:
    1. `pins set 7`
-   On success BMC prints `Set pin[7] BM_SPI_SEL`
+   При успешном выполнении команды BMC консоль выдаст `Set pin[7] BM_SPI_SEL`
    2. `pins set 19`
-   On success BMC powers on the board and prints `Set pin[19] ATX_PSON`
+   При успешном выполнении команды BMC консоль выдаст `Set pin[19] ATX_PSON`
    3. pins set 23
-   On success BMC replies `Set pin[23] EN_1V8`
-5. For TF307-MB-S-D board run the following commands in BMC console:
+   При успешном выполнении команды BMC консоль выдаст `Set pin[23] EN_1V8`
+5. Для платы TF307-MB-S-D команды в BMC консоли будут следующие:
    1. `pins set 11`
-   On success BMC prints `Set pin 11 (BM_SPI_SEL)`
+   При успешном выполнении команды BMC консоль выдаст `Set pin 11 (BM_SPI_SEL)`
    2. `pins set 16`
-   On success BMC powers on the board an prints `Set pin 16 (ATX_PSON)`
+   При успешном выполнении команды BMC консоль выдаст `Set pin 16 (ATX_PSON)`
    3. `pins set 26`
-   On success prints `Set pin 26 (EN_1V8)`
-6. Make a backup:
+   При успешном выполнении команды BMC консоль выдаст `Set pin 26 (EN_1V8)`
+6. Сделайте резервную копию прошивки, командой:
    ```
    sudo flashrom -p ft2232_spi:type=arm-usb-ocd-h,port=A,divisor=8 -c MT25QU256 -r tf307-firmware.bak.bin
    ```
-7. Flash the new firmware:
+7. Прошивка новой версии прошивки:
    ```
    sudo flashrom -p ft2232_spi:type=arm-usb-ocd-h,port=A,divisor=8 -c MT25QU256 -w mbm20.full.img
    ```
-   `flashrom` will warn that chip hasn't been tested:
+   `flashrom` предупредит, что чип не тестировался:
    ```
     flashrom v1.2 on Linux 5.8.0-53-generic (x86_64)
     flashrom is free software, get the source code at https://flashrom.org
@@ -127,36 +120,36 @@ Initial state:
     which mainboard or programmer you tested in the subject line.
     Thanks for your help!
    ```
-   The warning is harmless, please ignore it.
-   Next it will print
+   Не стоит обращать внимание на это предупреждение.
+   Вывод в консоли будет следующим:
    ```
    Reading old flash chip contents...
    ```
-   (this takes about 30 seconds)
-   and
+   (это занимает около 30 секунд)
+   далее
    ```
    Erasing and writing flash chip...
    Erase/write done
    Verifying flash...
    VERIFIED
    ```
-8. Run the following commands in BMC console
+8. Введите в BMC консоли следующую команду
    1. `pins bootseq`
-   On success this prints
+   При успешном выполниении команды BMC консоль выдаст
    ```
    L: [SHELL] Starting boot sequence
    E: [MB1BM1_PINS] PWG is active when 1.8 V voltage regulator is disabled
    L: [SHELL] Boot sequence finished
    ```
    2. `pins board_off`
-   This prints
+   При успешном выполнении команды BMC консоль выдаст
    ```
    L: [SHELL] Pins are reset to board off state
    L: [MB1BM1_PINS] Wake up requested
    L: [RTC] Current date 12.03.21, time 07:32:09
    ```
-   3. `pins board_off` (yes, repeat the same command)
-   On success it prints
+   3. `pins board_off` (Снова повторите ту же самую команду)
+   При успешном выполнении команды BMC консоль выдаст
    ```
    L: [SHELL] Pins are reset to board off state
    ```
